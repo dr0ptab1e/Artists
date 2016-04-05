@@ -1,5 +1,6 @@
 package lol.azaza.artists;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -23,7 +24,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,11 +50,18 @@ public class ArtistsListActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onBindViewHolder(Holder holder, int position) {
-                holder.name.setText(artists.get(position).name);
-                holder.genres.setText(artists.get(position).genres.toString().replaceAll("[\\[\\]]", ""));
-                holder.info.setText(artists.get(position).tracks + " tracks, " + artists.get(position).albums + " albums");
-                Glide.with(ArtistsListActivity.this).load(artists.get(position).coverBig).into(holder.cover);
+            public void onBindViewHolder(Holder holder, final int position) {
+                holder.name.setText(artists.get(position).getName());
+                holder.genres.setText(artists.get(position).getGenres());
+                holder.info.setText(artists.get(position).getInfo());
+                Glide.with(ArtistsListActivity.this).load(artists.get(position).getCoverSmall()).into(holder.cover);
+                holder.root.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(ArtistsListActivity.this, ArtistDetailActivity.class).putExtra("artist", artists.get(position));
+                        startActivity(intent);
+                    }
+                });
             }
 
             @Override
@@ -81,7 +88,7 @@ public class ArtistsListActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_refresh) {
             new AsyncTask<Void, Void, List<Artist>>() {
 
                 @Override
@@ -117,11 +124,7 @@ public class ArtistsListActivity extends AppCompatActivity {
                             }
                             artists.add(new Artist(id, name, genres, tracks, albums, link, description, coverBig, coverSmall));
                         }
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (JSONException e) {
+                    } catch (JSONException | IOException e) {
                         e.printStackTrace();
                     }
                     return artists;
@@ -136,9 +139,5 @@ public class ArtistsListActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    void parseData(String data) {
-
     }
 }
