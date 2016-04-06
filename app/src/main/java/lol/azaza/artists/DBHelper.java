@@ -6,8 +6,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import java.util.ArrayList;
-
 public class DBHelper extends SQLiteOpenHelper {
 
     public static final int DATABASE_VERSION = 1;
@@ -55,33 +53,22 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + TABLE_NAME;
 
-    public ArrayList<Artist> getArtists() {
-        ArrayList<Artist> artists = new ArrayList<>();
+    public Cursor getAllArtistsCursor() {
         SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = null;
-        try {
-            cursor = db.query(TABLE_NAME, new String[]{COLUMN_ID, COLUMN_NAME, COLUMN_GENRES, COLUMN_TRACKS, COLUMN_ALBUMS, COLUMN_LINK, COLUMN_DESCRIPTION, COLUMN_COVER_BIG, COLUMN_COVER_SMALL}, null, null, null, null, COLUMN_ID);
-            if (cursor.moveToFirst()) {
-                while (!cursor.isAfterLast()) {
-                    artists.add(new Artist(
-                            cursor.getLong(cursor.getColumnIndex(COLUMN_ID)),
-                            cursor.getString(cursor.getColumnIndex(COLUMN_NAME)),
-                            cursor.getString(cursor.getColumnIndex(COLUMN_GENRES)),
-                            cursor.getInt(cursor.getColumnIndex(COLUMN_TRACKS)),
-                            cursor.getInt(cursor.getColumnIndex(COLUMN_ALBUMS)),
-                            cursor.getString(cursor.getColumnIndex(COLUMN_LINK)),
-                            cursor.getString(cursor.getColumnIndex(COLUMN_DESCRIPTION)),
-                            cursor.getString(cursor.getColumnIndex(COLUMN_COVER_BIG)),
-                            cursor.getString(cursor.getColumnIndex(COLUMN_COVER_SMALL))));
-                    cursor.moveToNext();
-                }
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-        return artists;
+        return db.query(TABLE_NAME, new String[]{COLUMN_ID, COLUMN_NAME, COLUMN_GENRES, COLUMN_TRACKS, COLUMN_ALBUMS, COLUMN_LINK, COLUMN_DESCRIPTION, COLUMN_COVER_BIG, COLUMN_COVER_SMALL}, null, null, null, null, COLUMN_ID);
+    }
+
+    public Artist getArtist(Cursor cursor) {
+        return new Artist(
+                cursor.getLong(cursor.getColumnIndex(COLUMN_ID)),
+                cursor.getString(cursor.getColumnIndex(COLUMN_NAME)),
+                cursor.getString(cursor.getColumnIndex(COLUMN_GENRES)),
+                cursor.getInt(cursor.getColumnIndex(COLUMN_TRACKS)),
+                cursor.getInt(cursor.getColumnIndex(COLUMN_ALBUMS)),
+                cursor.getString(cursor.getColumnIndex(COLUMN_LINK)),
+                cursor.getString(cursor.getColumnIndex(COLUMN_DESCRIPTION)),
+                cursor.getString(cursor.getColumnIndex(COLUMN_COVER_BIG)),
+                cursor.getString(cursor.getColumnIndex(COLUMN_COVER_SMALL)));
     }
 
     public void removeArtists() {

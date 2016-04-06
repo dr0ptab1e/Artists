@@ -1,6 +1,7 @@
 package lol.azaza.artists;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -30,8 +31,7 @@ import java.util.List;
 
 public class ArtistsListActivity extends AppCompatActivity {
 
-    private RecyclerView.Adapter adapter;
-    private List<Artist> artists = new ArrayList<>();
+    private CursorRecyclerAdapter<Holder> adapter;
     public static final String ARTIST = "lol.azaza.artists.artist";
     private DBHelper dbHelper;
 
@@ -43,32 +43,27 @@ public class ArtistsListActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         RecyclerView artistsList = (RecyclerView) findViewById(R.id.artists_list);
-        adapter = new RecyclerView.Adapter<Holder>() {
-
+        adapter = new CursorRecyclerAdapter<Holder>(dbHelper.getAllArtistsCursor()) {
             @Override
-            public Holder onCreateViewHolder(ViewGroup parent, int viewType) {
-                View v = LayoutInflater.from(ArtistsListActivity.this).inflate(R.layout.artist_list_item, parent, false);
-                return new Holder(v);
-            }
-
-            @Override
-            public void onBindViewHolder(Holder holder, final int position) {
-                holder.name.setText(artists.get(position).getName());
-                holder.genres.setText(artists.get(position).getGenres());
-                holder.info.setText(artists.get(position).getInfo());
-                Glide.with(ArtistsListActivity.this).load(artists.get(position).getCoverSmall()).into(holder.cover);
+            public void onBindViewHolderCursor(Holder holder, Cursor cursor) {
+                final Artist artist = dbHelper.getArtist(cursor);
+                holder.name.setText(artist.getName());
+                holder.genres.setText(artist.getGenres());
+                holder.info.setText(artist.getInfo());
+                Glide.with(ArtistsListActivity.this).load(artist.getCoverSmall()).into(holder.cover);
                 holder.root.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Intent intent = new Intent(ArtistsListActivity.this, ArtistDetailActivity.class).putExtra(ARTIST, artists.get(position));
+                        Intent intent = new Intent(ArtistsListActivity.this, ArtistDetailActivity.class).putExtra(ARTIST, artist);
                         startActivity(intent);
                     }
                 });
             }
 
             @Override
-            public int getItemCount() {
-                return artists.size();
+            public Holder onCreateViewHolder(ViewGroup parent, int viewType) {
+                View v = LayoutInflater.from(ArtistsListActivity.this).inflate(R.layout.artist_list_item, parent, false);
+                return new Holder(v);
             }
         };
         artistsList.setAdapter(adapter);
@@ -78,8 +73,7 @@ public class ArtistsListActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        artists = dbHelper.getArtists();
-        adapter.notifyDataSetChanged();
+        adapter.changeCursor(dbHelper.getAllArtistsCursor());
     }
 
     @Override
@@ -142,12 +136,10 @@ public class ArtistsListActivity extends AppCompatActivity {
 
                 @Override
                 protected void onPostExecute(Void result) {
-                    artists = dbHelper.getArtists();
-                    adapter.notifyDataSetChanged();
+                    adapter.changeCursor(dbHelper.getAllArtistsCursor());
                 }
             }.execute();
         }
-
         return super.onOptionsItemSelected(item);
     }
 }
