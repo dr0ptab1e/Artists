@@ -30,17 +30,19 @@ import java.util.List;
 
 public class ArtistsListActivity extends AppCompatActivity {
 
-    RecyclerView artistsList;
-    RecyclerView.Adapter adapter;
-    List<Artist> artists = new ArrayList<>();
+    private RecyclerView.Adapter adapter;
+    private List<Artist> artists = new ArrayList<>();
+    public static final String ARTIST = "lol.azaza.artists.artist";
+    private DBHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        dbHelper = new DBHelper(this);
         setContentView(R.layout.activity_artists_list);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        artistsList = (RecyclerView) findViewById(R.id.artists_list);
+        RecyclerView artistsList = (RecyclerView) findViewById(R.id.artists_list);
         adapter = new RecyclerView.Adapter<Holder>() {
 
             @Override
@@ -58,7 +60,7 @@ public class ArtistsListActivity extends AppCompatActivity {
                 holder.root.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Intent intent = new Intent(ArtistsListActivity.this, ArtistDetailActivity.class).putExtra("artist", artists.get(position));
+                        Intent intent = new Intent(ArtistsListActivity.this, ArtistDetailActivity.class).putExtra(ARTIST, artists.get(position));
                         startActivity(intent);
                     }
                 });
@@ -71,6 +73,13 @@ public class ArtistsListActivity extends AppCompatActivity {
         };
         artistsList.setAdapter(adapter);
         artistsList.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        artists = dbHelper.getArtists();
+        adapter.notifyDataSetChanged();
     }
 
     @Override
@@ -89,11 +98,11 @@ public class ArtistsListActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
-            new AsyncTask<Void, Void, List<Artist>>() {
+            new AsyncTask<Void, Void, Void>() {
 
                 @Override
-                protected List<Artist> doInBackground(Void... params) {
-                    List<Artist> artists = new ArrayList<>();
+                protected Void doInBackground(Void... params) {
+                    dbHelper.removeArtists();
                     try {
                         URL url = new URL("http://download.cdn.yandex.net/mobilization-2016/artists.json");
                         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -105,12 +114,13 @@ public class ArtistsListActivity extends AppCompatActivity {
                             long id = object.getInt("id");
                             String name = object.getString("name");
                             JSONArray jsonGenres = object.optJSONArray("genres");
-                            List<String> genres = new ArrayList<>();
+                            List<String> genresList = new ArrayList<>();
                             if (jsonGenres != null) {
                                 for (int j = 0; j < jsonGenres.length(); ++j) {
-                                    genres.add(jsonGenres.getString(j));
+                                    genresList.add(jsonGenres.getString(j));
                                 }
                             }
+                            String genres = genresList.toString().replaceAll("[\\[\\]]", "");
                             int tracks = object.optInt("tracks");
                             int albums = object.optInt("albums");
                             String link = object.optString("link");
@@ -122,17 +132,17 @@ public class ArtistsListActivity extends AppCompatActivity {
                                 coverBig = jsonCover.getString("big");
                                 coverSmall = jsonCover.getString("small");
                             }
-                            artists.add(new Artist(id, name, genres, tracks, albums, link, description, coverBig, coverSmall));
+                            dbHelper.addArtist(new Artist(id, name, genres, tracks, albums, link, description, coverBig, coverSmall));
                         }
                     } catch (JSONException | IOException e) {
                         e.printStackTrace();
                     }
-                    return artists;
+                    return null;
                 }
 
                 @Override
-                protected void onPostExecute(List<Artist> result) {
-                    artists = result;
+                protected void onPostExecute(Void result) {
+                    artists = dbHelper.getArtists();
                     adapter.notifyDataSetChanged();
                 }
             }.execute();

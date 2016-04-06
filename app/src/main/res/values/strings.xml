@@ -2,4 +2,5 @@
     <string name="app_name">Artists</string>
     <string name="action_refresh">Refresh</string>
     <string name="title_activity_artist_info">ArtistInfoActivity</string>
+    <string name="bio">Biography</string>
 </resources>

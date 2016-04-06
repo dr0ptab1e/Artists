@@ -17,7 +17,7 @@ public class ArtistDetailActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        Artist artist = (Artist) getIntent().getSerializableExtra("artist");
+        Artist artist = (Artist) getIntent().getSerializableExtra(ArtistsListActivity.ARTIST);
         setTitle(artist.getName());
         ImageView cover = (ImageView) findViewById(R.id.cover);
         Glide.with(this).load(artist.getCoverBig()).into(cover);

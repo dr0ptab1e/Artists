@@ -1,7 +1,6 @@
 package lol.azaza.artists;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * Created by also0914 on 05.04.2016.
@@ -9,7 +8,7 @@ import java.util.List;
 public class Artist implements Serializable {
     private long id;
     private String name;
-    private List<String> genres;
+    private String genres;
     private int tracks;
     private int albums;
     private String link;
@@ -17,7 +16,7 @@ public class Artist implements Serializable {
     private String coverBig;
     private String coverSmall;
 
-    public Artist(long id, String name, List<String> genres, int tracks, int albums, String link, String description, String coverBig, String coverSmall) {
+    public Artist(long id, String name, String genres, int tracks, int albums, String link, String description, String coverBig, String coverSmall) {
         this.id = id;
         this.name = name;
         this.genres = genres;
@@ -46,10 +45,10 @@ public class Artist implements Serializable {
     }
 
     public String getGenres() {
-        return genres.toString().replaceAll("[\\[\\]]", "");
+        return genres;
     }
 
-    public void setGenres(List<String> genres) {
+    public void setGenres(String genres) {
         this.genres = genres;
     }
 
