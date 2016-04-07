@@ -10,11 +10,11 @@ import android.widget.TextView;
  */
 public class Holder extends RecyclerView.ViewHolder {
 
-    View root;
-    TextView name;
-    TextView genres;
-    TextView info;
-    ImageView cover;
+    public View root;
+    public TextView name;
+    public TextView genres;
+    public TextView info;
+    public ImageView cover;
 
     public Holder(View itemView) {
         super(itemView);

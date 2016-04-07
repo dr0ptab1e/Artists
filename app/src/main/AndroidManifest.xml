@@ -22,7 +22,6 @@
         </activity>
         <activity
             android:name=".ArtistDetailActivity"
-            android:label="@string/title_activity_artist_info"
             android:parentActivityName=".ArtistsListActivity"
             android:theme="@style/AppTheme.NoActionBar" >
             <meta-data

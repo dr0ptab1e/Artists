@@ -1,20 +1,17 @@
 package lol.azaza.artists;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-
-import com.bumptech.glide.Glide;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
@@ -32,8 +29,9 @@ import java.util.List;
 public class ArtistsListActivity extends AppCompatActivity {
 
     private CursorRecyclerAdapter<Holder> adapter;
-    public static final String ARTIST = "lol.azaza.artists.artist";
     private DBHelper dbHelper;
+    private DataLoadedReceiver dataLoadedReceiver;
+    public static final String ACTION_DATA_LOADED = "lol.azaza.artists.data_loaded";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,36 +41,16 @@ public class ArtistsListActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         RecyclerView artistsList = (RecyclerView) findViewById(R.id.artists_list);
-        adapter = new CursorRecyclerAdapter<Holder>(dbHelper.getAllArtistsCursor()) {
-            @Override
-            public void onBindViewHolderCursor(Holder holder, Cursor cursor) {
-                final Artist artist = dbHelper.getArtist(cursor);
-                holder.name.setText(artist.getName());
-                holder.genres.setText(artist.getGenres());
-                holder.info.setText(artist.getInfo());
-                Glide.with(ArtistsListActivity.this).load(artist.getCoverSmall()).into(holder.cover);
-                holder.root.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(ArtistsListActivity.this, ArtistDetailActivity.class).putExtra(ARTIST, artist);
-                        startActivity(intent);
-                    }
-                });
-            }
-
-            @Override
-            public Holder onCreateViewHolder(ViewGroup parent, int viewType) {
-                View v = LayoutInflater.from(ArtistsListActivity.this).inflate(R.layout.artist_list_item, parent, false);
-                return new Holder(v);
-            }
-        };
+        adapter = new ArtistAdapter(this, dbHelper.getAllArtistsCursor());
         artistsList.setAdapter(adapter);
         artistsList.setLayoutManager(new LinearLayoutManager(this));
+        dataLoadedReceiver = new DataLoadedReceiver();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        registerReceiver(dataLoadedReceiver, new IntentFilter(ACTION_DATA_LOADED));
         adapter.changeCursor(dbHelper.getAllArtistsCursor());
     }
 
@@ -94,8 +72,11 @@ public class ArtistsListActivity extends AppCompatActivity {
         if (id == R.id.action_refresh) {
             new AsyncTask<Void, Void, Void>() {
 
+                Context context;
+
                 @Override
                 protected Void doInBackground(Void... params) {
+                    context = getApplicationContext();
                     dbHelper.removeArtists();
                     try {
                         URL url = new URL("http://download.cdn.yandex.net/mobilization-2016/artists.json");
@@ -136,10 +117,24 @@ public class ArtistsListActivity extends AppCompatActivity {
 
                 @Override
                 protected void onPostExecute(Void result) {
-                    adapter.changeCursor(dbHelper.getAllArtistsCursor());
+                    context.sendBroadcast(new Intent(ACTION_DATA_LOADED));
                 }
             }.execute();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private class DataLoadedReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            adapter.changeCursor(dbHelper.getAllArtistsCursor());
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(dataLoadedReceiver);
     }
 }
