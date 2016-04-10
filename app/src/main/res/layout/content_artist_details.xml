@@ -8,13 +8,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        tools:showIn="@layout/activity_artist_info"
         tools:context="lol.azaza.artists.ArtistDetailActivity">
 
         <ImageView
             android:id="@+id/cover"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true" />
 
         <LinearLayout
             android:orientation="vertical"

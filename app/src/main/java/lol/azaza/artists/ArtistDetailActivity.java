@@ -1,5 +1,6 @@
 package lol.azaza.artists;
 
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -20,7 +21,9 @@ public class ArtistDetailActivity extends AppCompatActivity {
         Artist artist = (Artist) getIntent().getSerializableExtra(ArtistAdapter.ARTIST);
         setTitle(artist.getName());
         ImageView cover = (ImageView) findViewById(R.id.cover);
-        Glide.with(this).load(artist.getCoverBig()).into(cover);
+        cover.setMaxWidth(dpToPx(350));
+        cover.setMaxHeight(dpToPx(450));
+        Glide.with(this).load(artist.getCoverBig()).fitCenter().into(cover);
         TextView genres = (TextView) findViewById(R.id.artist_genres);
         genres.setText(artist.getGenres());
         TextView info = (TextView) findViewById(R.id.artist_info);
@@ -29,4 +32,7 @@ public class ArtistDetailActivity extends AppCompatActivity {
         description.setText(artist.getDescription());
     }
 
+    public static int dpToPx(int dp) {
+        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    }
 }
