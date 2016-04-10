@@ -6,12 +6,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
@@ -26,12 +25,14 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArtistsListActivity extends AppCompatActivity {
+public class ArtistsListActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
     private CursorRecyclerAdapter<Holder> adapter;
     private DBHelper dbHelper;
     private DataLoadedReceiver dataLoadedReceiver;
     public static final String ACTION_DATA_LOADED = "lol.azaza.artists.data_loaded";
+    public static final String FLAG_IS_REFRESHING = "lol.azaza.artists.is_refreshing";
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,88 +41,78 @@ public class ArtistsListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_artists_list);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+        swipeRefreshLayout.setOnRefreshListener(this);
         RecyclerView artistsList = (RecyclerView) findViewById(R.id.artists_list);
         adapter = new ArtistAdapter(this, dbHelper.getAllArtistsCursor());
         artistsList.setAdapter(adapter);
         artistsList.setLayoutManager(new LinearLayoutManager(this));
         dataLoadedReceiver = new DataLoadedReceiver();
+        registerReceiver(dataLoadedReceiver, new IntentFilter(ACTION_DATA_LOADED));
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(dataLoadedReceiver, new IntentFilter(ACTION_DATA_LOADED));
-        adapter.changeCursor(dbHelper.getAllArtistsCursor());
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_artists_list, menu);
-        return true;
-    }
+    public void onRefresh() {
+        swipeRefreshLayout.setRefreshing(true);
+        new AsyncTask<Void, Void, Void>() {
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+            Context context;
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_refresh) {
-            new AsyncTask<Void, Void, Void>() {
-
-                Context context;
-
-                @Override
-                protected Void doInBackground(Void... params) {
-                    context = getApplicationContext();
-                    dbHelper.removeArtists();
-                    try {
-                        URL url = new URL("http://download.cdn.yandex.net/mobilization-2016/artists.json");
-                        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                        String jsonString = IOUtils.toString(in);
-                        JSONArray array = new JSONArray(jsonString);
-                        for (int i = 0; i < array.length(); ++i) {
-                            JSONObject object = array.getJSONObject(i);
-                            long id = object.getInt("id");
-                            String name = object.getString("name");
-                            JSONArray jsonGenres = object.optJSONArray("genres");
-                            List<String> genresList = new ArrayList<>();
-                            if (jsonGenres != null) {
-                                for (int j = 0; j < jsonGenres.length(); ++j) {
-                                    genresList.add(jsonGenres.getString(j));
-                                }
+            @Override
+            protected Void doInBackground(Void... params) {
+                context = getApplicationContext();
+                dbHelper.getReadableDatabase().beginTransaction();
+                dbHelper.removeArtists();
+                try {
+                    URL url = new URL("http://download.cdn.yandex.net/mobilization-2016/artists.json");
+                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                    InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                    String jsonString = IOUtils.toString(in);
+                    JSONArray array = new JSONArray(jsonString);
+                    for (int i = 0; i < array.length(); ++i) {
+                        JSONObject object = array.getJSONObject(i);
+                        long id = object.getInt("id");
+                        String name = object.getString("name");
+                        JSONArray jsonGenres = object.optJSONArray("genres");
+                        List<String> genresList = new ArrayList<>();
+                        if (jsonGenres != null) {
+                            for (int j = 0; j < jsonGenres.length(); ++j) {
+                                genresList.add(jsonGenres.getString(j));
                             }
-                            String genres = genresList.toString().replaceAll("[\\[\\]]", "");
-                            int tracks = object.optInt("tracks");
-                            int albums = object.optInt("albums");
-                            String link = object.optString("link");
-                            String description = object.optString("description");
-                            JSONObject jsonCover = object.optJSONObject("cover");
-                            String coverBig = null;
-                            String coverSmall = null;
-                            if (jsonCover != null) {
-                                coverBig = jsonCover.getString("big");
-                                coverSmall = jsonCover.getString("small");
-                            }
-                            dbHelper.addArtist(new Artist(id, name, genres, tracks, albums, link, description, coverBig, coverSmall));
                         }
-                    } catch (JSONException | IOException e) {
-                        e.printStackTrace();
+                        String genres = genresList.toString().replaceAll("[\\[\\]]", "");
+                        int tracks = object.optInt("tracks");
+                        int albums = object.optInt("albums");
+                        String link = object.optString("link");
+                        String description = object.optString("description");
+                        JSONObject jsonCover = object.optJSONObject("cover");
+                        String coverBig = null;
+                        String coverSmall = null;
+                        if (jsonCover != null) {
+                            coverBig = jsonCover.getString("big");
+                            coverSmall = jsonCover.getString("small");
+                        }
+                        dbHelper.addArtist(new Artist(id, name, genres, tracks, albums, link, description, coverBig, coverSmall));
                     }
-                    return null;
+                    dbHelper.getReadableDatabase().setTransactionSuccessful();
+                    dbHelper.getReadableDatabase().endTransaction();
+                } catch (JSONException | IOException e) {
+                    dbHelper.getReadableDatabase().endTransaction();
+                    e.printStackTrace();
                 }
+                return null;
+            }
 
-                @Override
-                protected void onPostExecute(Void result) {
-                    context.sendBroadcast(new Intent(ACTION_DATA_LOADED));
-                }
-            }.execute();
-        }
-        return super.onOptionsItemSelected(item);
+            @Override
+            protected void onPostExecute(Void result) {
+                context.sendBroadcast(new Intent(ACTION_DATA_LOADED));
+            }
+        }.execute();
     }
 
     private class DataLoadedReceiver extends BroadcastReceiver {
@@ -129,12 +120,30 @@ public class ArtistsListActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             adapter.changeCursor(dbHelper.getAllArtistsCursor());
+            swipeRefreshLayout.setRefreshing(false);
         }
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
         unregisterReceiver(dataLoadedReceiver);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(FLAG_IS_REFRESHING, swipeRefreshLayout.isRefreshing());
+    }
+
+    @Override
+    protected void onRestoreInstanceState(final Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(savedInstanceState.getBoolean(FLAG_IS_REFRESHING));
+            }
+        });
     }
 }

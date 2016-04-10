@@ -2,9 +2,6 @@ package lol.azaza.artists;
 
 import java.io.Serializable;
 
-/**
- * Created by also0914 on 05.04.2016.
- */
 public class Artist implements Serializable {
     private long id;
     private String name;

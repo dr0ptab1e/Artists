@@ -5,9 +5,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-/**
- * Created by azaza on 04.04.2016.
- */
 public class Holder extends RecyclerView.ViewHolder {
 
     public View root;

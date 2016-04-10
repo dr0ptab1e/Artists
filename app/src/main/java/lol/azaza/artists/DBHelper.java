@@ -58,7 +58,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.query(TABLE_NAME, new String[]{COLUMN_ID, COLUMN_NAME, COLUMN_GENRES, COLUMN_TRACKS, COLUMN_ALBUMS, COLUMN_LINK, COLUMN_DESCRIPTION, COLUMN_COVER_BIG, COLUMN_COVER_SMALL}, null, null, null, null, COLUMN_ID);
     }
 
-    public Artist getArtist(Cursor cursor) {
+    public static Artist getArtist(Cursor cursor) {
         return new Artist(
                 cursor.getLong(cursor.getColumnIndex(COLUMN_ID)),
                 cursor.getString(cursor.getColumnIndex(COLUMN_NAME)),

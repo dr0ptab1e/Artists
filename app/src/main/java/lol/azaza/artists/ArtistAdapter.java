@@ -12,18 +12,16 @@ import com.bumptech.glide.Glide;
 public class ArtistAdapter extends CursorRecyclerAdapter<Holder> {
 
     private Context context;
-    private DBHelper dbHelper;
     public static final String ARTIST = "lol.azaza.artists.artist";
 
     public ArtistAdapter(Context context, Cursor cursor) {
         super(cursor);
         this.context = context;
-        dbHelper = new DBHelper(context);
     }
 
     @Override
     public void onBindViewHolderCursor(Holder holder, Cursor cursor) {
-        final Artist artist = dbHelper.getArtist(cursor);
+        final Artist artist = DBHelper.getArtist(cursor);
         holder.name.setText(artist.getName());
         holder.genres.setText(artist.getGenres());
         holder.info.setText(artist.getInfo());

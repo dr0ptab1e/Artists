@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    tools:context="lol.azaza.artists.ArtistDetailActivity">
+
+    <ImageView
+        android:id="@+id/cover"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:maxWidth="200dp" />
+
+    <ScrollView
+        android:id="@+id/scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minWidth="500dp">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp">
+
+            <TextView
+                android:id="@+id/artist_genres"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/lightText"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/artist_info"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/lightText"
+                android:textSize="20sp" />
+
+            <TextView
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/bio"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/artist_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:layout_marginBottom="20dp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
