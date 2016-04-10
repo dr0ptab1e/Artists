@@ -11,19 +11,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 
 import org.apache.commons.io.IOUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 public class ArtistsListActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
@@ -73,37 +74,17 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
                     HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                     InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                     String jsonString = IOUtils.toString(in);
-                    JSONArray array = new JSONArray(jsonString);
-                    for (int i = 0; i < array.length(); ++i) {
-                        JSONObject object = array.getJSONObject(i);
-                        long id = object.getInt("id");
-                        String name = object.getString("name");
-                        JSONArray jsonGenres = object.optJSONArray("genres");
-                        List<String> genresList = new ArrayList<>();
-                        if (jsonGenres != null) {
-                            for (int j = 0; j < jsonGenres.length(); ++j) {
-                                genresList.add(jsonGenres.getString(j));
-                            }
-                        }
-                        String genres = genresList.toString().replaceAll("[\\[\\]]", "");
-                        int tracks = object.optInt("tracks");
-                        int albums = object.optInt("albums");
-                        String link = object.optString("link");
-                        String description = object.optString("description");
-                        JSONObject jsonCover = object.optJSONObject("cover");
-                        String coverBig = null;
-                        String coverSmall = null;
-                        if (jsonCover != null) {
-                            coverBig = jsonCover.getString("big");
-                            coverSmall = jsonCover.getString("small");
-                        }
-                        dbHelper.addArtist(new Artist(id, name, genres, tracks, albums, link, description, coverBig, coverSmall));
+                    GsonBuilder builder = new GsonBuilder();
+                    Gson gson = builder.create();
+                    Artist[] artists = gson.fromJson(jsonString, Artist[].class);
+                    for (Artist artist : Arrays.asList(artists)) {
+                        dbHelper.addArtist(artist);
                     }
                     dbHelper.getReadableDatabase().setTransactionSuccessful();
                     dbHelper.getReadableDatabase().endTransaction();
-                } catch (JSONException | IOException e) {
+                } catch (IOException | JsonParseException e) {
                     dbHelper.getReadableDatabase().endTransaction();
-                    e.printStackTrace();
+                    Toast.makeText(ArtistsListActivity.this, getString(R.string.error), Toast.LENGTH_LONG).show();
                 }
                 return null;
             }

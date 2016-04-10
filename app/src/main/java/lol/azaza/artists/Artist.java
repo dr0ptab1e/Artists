@@ -1,28 +1,39 @@
 package lol.azaza.artists;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
 
 public class Artist implements Serializable {
     private long id;
     private String name;
-    private String genres;
+    private List<String> genres;
     private int tracks;
     private int albums;
     private String link;
     private String description;
-    private String coverBig;
-    private String coverSmall;
+
+    private class Cover implements Serializable {
+        public Cover(String small, String big) {
+            this.small = small;
+            this.big = big;
+        }
+
+        private String small;
+        private String big;
+    }
+
+    private Cover cover;
 
     public Artist(long id, String name, String genres, int tracks, int albums, String link, String description, String coverBig, String coverSmall) {
         this.id = id;
         this.name = name;
-        this.genres = genres;
+        this.genres = Arrays.asList(genres.split("\\s*,\\s*"));
         this.tracks = tracks;
         this.albums = albums;
         this.link = link;
         this.description = description;
-        this.coverBig = coverBig;
-        this.coverSmall = coverSmall;
+        this.cover = new Cover(coverSmall, coverBig);
     }
 
     public long getId() {
@@ -42,10 +53,10 @@ public class Artist implements Serializable {
     }
 
     public String getGenres() {
-        return genres;
+        return genres.toString().replaceAll("[\\[\\]]", "");
     }
 
-    public void setGenres(String genres) {
+    public void setGenres(List<String> genres) {
         this.genres = genres;
     }
 
@@ -82,19 +93,15 @@ public class Artist implements Serializable {
     }
 
     public String getCoverBig() {
-        return coverBig;
+        return cover.big;
     }
 
-    public void setCoverBig(String coverBig) {
-        this.coverBig = coverBig;
+    public void setCover(Cover cover) {
+        this.cover = cover;
     }
 
     public String getCoverSmall() {
-        return coverSmall;
-    }
-
-    public void setCoverSmall(String coverSmall) {
-        this.coverSmall = coverSmall;
+        return cover.small;
     }
 
     public String getInfo() {

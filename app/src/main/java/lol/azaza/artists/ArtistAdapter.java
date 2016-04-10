@@ -40,4 +40,10 @@ public class ArtistAdapter extends CursorRecyclerAdapter<Holder> {
         View v = LayoutInflater.from(context).inflate(R.layout.artist_list_item, parent, false);
         return new Holder(v);
     }
+
+    @Override
+    public void onViewRecycled(Holder holder) {
+        super.onViewRecycled(holder);
+        Glide.clear(holder.cover);
+    }
 }
