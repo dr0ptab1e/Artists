@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Исполнители</string>
+    <string name="bio">Биография</string>
+    <string name="error">Ошибка при загрузке данных</string>
+</resources>
