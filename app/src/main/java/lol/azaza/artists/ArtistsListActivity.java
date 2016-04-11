@@ -53,11 +53,6 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    @Override
     public void onRefresh() {
         swipeRefreshLayout.setRefreshing(true);
         new AsyncTask<Void, Void, Void>() {
@@ -127,4 +122,5 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
             }
         });
     }
+
 }
