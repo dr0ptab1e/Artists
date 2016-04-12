@@ -136,6 +136,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(dataLoadedReceiver);
+        unregisterReceiver(errorOccurredReceiver);
     }
 
     @Override
