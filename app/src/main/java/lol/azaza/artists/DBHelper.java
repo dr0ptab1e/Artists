@@ -91,4 +91,14 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_COVER_SMALL, artist.getCoverSmall());
         db.insert(TABLE_NAME, null, values);
     }
+
+    public boolean isArtistsTableEmpty() {
+        SQLiteDatabase db = getWritableDatabase();
+        String q = "SELECT count(*) FROM " + TABLE_NAME;
+        Cursor cursor = db.rawQuery(q, null);
+        cursor.moveToFirst();
+        int count = cursor.getInt(0);
+        cursor.close();
+        return count <= 0;
+    }
 }

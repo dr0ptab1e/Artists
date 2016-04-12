@@ -3,4 +3,5 @@
     <string name="app_name">Исполнители</string>
     <string name="bio">Биография</string>
     <string name="error">Ошибка при загрузке данных</string>
+    <string name="try_again">Повторить</string>
 </resources>

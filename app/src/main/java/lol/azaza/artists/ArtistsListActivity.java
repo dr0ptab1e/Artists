@@ -11,6 +11,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -31,9 +34,13 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
     private CursorRecyclerAdapter<Holder> adapter;
     private DBHelper dbHelper;
     private DataLoadedReceiver dataLoadedReceiver;
+    private ErrorOccurredReceiver errorOccurredReceiver;
     public static final String ACTION_DATA_LOADED = "lol.azaza.artists.data_loaded";
+    public static final String ACTION_ERROR_OCCURRED = "lol.azaza.artists.error_occurred";
     public static final String FLAG_IS_REFRESHING = "lol.azaza.artists.is_refreshing";
     private SwipeRefreshLayout swipeRefreshLayout;
+    private LinearLayout errorLayout;
+    private Button tryAgainButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +49,14 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
         setContentView(R.layout.activity_artists_list);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        errorLayout = (LinearLayout) findViewById(R.id.error_layout);
+        tryAgainButton = (Button) findViewById(R.id.try_again_button);
+        tryAgainButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ArtistsListActivity.this.onRefresh();
+            }
+        });
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(this);
         RecyclerView artistsList = (RecyclerView) findViewById(R.id.artists_list);
@@ -50,6 +65,8 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
         artistsList.setLayoutManager(new LinearLayoutManager(this));
         dataLoadedReceiver = new DataLoadedReceiver();
         registerReceiver(dataLoadedReceiver, new IntentFilter(ACTION_DATA_LOADED));
+        errorOccurredReceiver = new ErrorOccurredReceiver();
+        registerReceiver(errorOccurredReceiver, new IntentFilter(ACTION_ERROR_OCCURRED));
     }
 
     @Override
@@ -79,7 +96,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
                     dbHelper.getReadableDatabase().endTransaction();
                 } catch (IOException | JsonParseException e) {
                     dbHelper.getReadableDatabase().endTransaction();
-                    Toast.makeText(ArtistsListActivity.this, getString(R.string.error), Toast.LENGTH_LONG).show();
+                    ArtistsListActivity.this.sendBroadcast(new Intent(ACTION_ERROR_OCCURRED));
                 }
                 return null;
             }
@@ -95,8 +112,23 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (!dbHelper.isArtistsTableEmpty()) {
+                errorLayout.setVisibility(View.GONE);
+            }
             adapter.changeCursor(dbHelper.getAllArtistsCursor());
             swipeRefreshLayout.setRefreshing(false);
+        }
+    }
+
+    private class ErrorOccurredReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (dbHelper.isArtistsTableEmpty()) {
+                errorLayout.setVisibility(View.VISIBLE);
+            } else {
+                Toast.makeText(ArtistsListActivity.this, getString(R.string.error), Toast.LENGTH_LONG).show();
+            }
         }
     }
 
