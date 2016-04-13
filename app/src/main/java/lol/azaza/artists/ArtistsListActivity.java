@@ -79,8 +79,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
             @Override
             protected Void doInBackground(Void... params) {
                 context = getApplicationContext();
-                dbHelper.getReadableDatabase().beginTransaction();
-                dbHelper.removeArtists();
+                Artist[] artists = null;
                 try {
                     URL url = new URL("http://download.cdn.yandex.net/mobilization-2016/artists.json");
                     HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -88,15 +87,20 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
                     String jsonString = IOUtils.toString(in);
                     GsonBuilder builder = new GsonBuilder();
                     Gson gson = builder.create();
-                    Artist[] artists = gson.fromJson(jsonString, Artist[].class);
+                    artists = gson.fromJson(jsonString, Artist[].class);
+                } catch (IOException | JsonParseException e) {
+                    dbHelper.getReadableDatabase().endTransaction();
+                    ArtistsListActivity.this.sendBroadcast(new Intent(ACTION_ERROR_OCCURRED));
+                }
+                dbHelper.getReadableDatabase().beginTransactionNonExclusive();
+                try {
+                    dbHelper.removeArtists();
                     for (Artist artist : Arrays.asList(artists)) {
                         dbHelper.addArtist(artist);
                     }
                     dbHelper.getReadableDatabase().setTransactionSuccessful();
+                } finally {
                     dbHelper.getReadableDatabase().endTransaction();
-                } catch (IOException | JsonParseException e) {
-                    dbHelper.getReadableDatabase().endTransaction();
-                    ArtistsListActivity.this.sendBroadcast(new Intent(ACTION_ERROR_OCCURRED));
                 }
                 return null;
             }
