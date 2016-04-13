@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
 
 public class ArtistsListActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
@@ -40,7 +39,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
     public static final String FLAG_IS_REFRESHING = "lol.azaza.artists.is_refreshing";
     private SwipeRefreshLayout swipeRefreshLayout;
     private LinearLayout errorLayout;
-    private Button tryAgainButton;
+    private LinearLayout hintLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +49,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         errorLayout = (LinearLayout) findViewById(R.id.error_layout);
-        tryAgainButton = (Button) findViewById(R.id.try_again_button);
+        Button tryAgainButton = (Button) findViewById(R.id.try_again_button);
         tryAgainButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -67,6 +66,10 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
         registerReceiver(dataLoadedReceiver, new IntentFilter(ACTION_DATA_LOADED));
         errorOccurredReceiver = new ErrorOccurredReceiver();
         registerReceiver(errorOccurredReceiver, new IntentFilter(ACTION_ERROR_OCCURRED));
+        hintLayout = (LinearLayout) findViewById(R.id.hint_layout);
+        if (dbHelper.isArtistsTableEmpty()) {
+            hintLayout.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -75,11 +78,11 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
         new AsyncTask<Void, Void, Void>() {
 
             Context context;
+            boolean isSuccess = true;
 
             @Override
             protected Void doInBackground(Void... params) {
                 context = getApplicationContext();
-                Artist[] artists = null;
                 try {
                     URL url = new URL("http://download.cdn.yandex.net/mobilization-2016/artists.json");
                     HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -87,26 +90,18 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
                     String jsonString = IOUtils.toString(in);
                     GsonBuilder builder = new GsonBuilder();
                     Gson gson = builder.create();
-                    artists = gson.fromJson(jsonString, Artist[].class);
+                    Artist[] artists = gson.fromJson(jsonString, Artist[].class);
+                    dbHelper.replaceArtists(artists);
                 } catch (IOException | JsonParseException e) {
-                    ArtistsListActivity.this.sendBroadcast(new Intent(ACTION_ERROR_OCCURRED));
-                }
-                dbHelper.getReadableDatabase().beginTransactionNonExclusive();
-                try {
-                    dbHelper.removeArtists();
-                    for (Artist artist : Arrays.asList(artists)) {
-                        dbHelper.addArtist(artist);
-                    }
-                    dbHelper.getReadableDatabase().setTransactionSuccessful();
-                } finally {
-                    dbHelper.getReadableDatabase().endTransaction();
+                    isSuccess = false;
                 }
                 return null;
             }
 
             @Override
             protected void onPostExecute(Void result) {
-                context.sendBroadcast(new Intent(ACTION_DATA_LOADED));
+                Intent resultIntent = isSuccess ? new Intent(ACTION_DATA_LOADED) : new Intent(ACTION_ERROR_OCCURRED);
+                context.sendBroadcast(resultIntent);
             }
         }.execute();
     }
@@ -116,6 +111,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
         @Override
         public void onReceive(Context context, Intent intent) {
             if (!dbHelper.isArtistsTableEmpty()) {
+                hintLayout.setVisibility(View.GONE);
                 errorLayout.setVisibility(View.GONE);
             }
             adapter.changeCursor(dbHelper.getAllArtistsCursor());
@@ -127,6 +123,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            hintLayout.setVisibility(View.GONE);
             if (dbHelper.isArtistsTableEmpty()) {
                 errorLayout.setVisibility(View.VISIBLE);
             } else {
@@ -138,6 +135,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        adapter.getCursor().close();
         unregisterReceiver(dataLoadedReceiver);
         unregisterReceiver(errorOccurredReceiver);
     }

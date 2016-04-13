@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.Arrays;
+
 public class DBHelper extends SQLiteOpenHelper {
 
     public static final int DATABASE_VERSION = 1;
@@ -71,14 +73,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 cursor.getString(cursor.getColumnIndex(COLUMN_COVER_SMALL)));
     }
 
-    public void removeArtists() {
-        SQLiteDatabase db = getWritableDatabase();
-        db.execSQL(SQL_DELETE_ENTRIES);
-        db.execSQL(SQL_CREATE_ENTRIES);
-    }
-
-    public void addArtist(Artist artist) {
-        SQLiteDatabase db = getWritableDatabase();
+    public void addArtist(Artist artist, SQLiteDatabase db) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_ID, artist.getId());
         values.put(COLUMN_NAME, artist.getName());
@@ -100,5 +95,21 @@ public class DBHelper extends SQLiteOpenHelper {
         int count = cursor.getInt(0);
         cursor.close();
         return count <= 0;
+    }
+
+    public void replaceArtists(Artist[] artists) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransactionNonExclusive();
+        try {
+            db.execSQL(SQL_DELETE_ENTRIES);
+            db.execSQL(SQL_CREATE_ENTRIES);
+            for (Artist artist : Arrays.asList(artists)) {
+                addArtist(artist, db);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
     }
 }

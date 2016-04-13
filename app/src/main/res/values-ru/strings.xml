@@ -4,4 +4,5 @@
     <string name="bio">Биография</string>
     <string name="error">Ошибка при загрузке данных</string>
     <string name="try_again">Повторить</string>
+    <string name="swipe_to_refresh">Потяните вниз\nчтобы обновить данные</string>
 </resources>
