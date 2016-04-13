@@ -89,7 +89,6 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
                     Gson gson = builder.create();
                     artists = gson.fromJson(jsonString, Artist[].class);
                 } catch (IOException | JsonParseException e) {
-                    dbHelper.getReadableDatabase().endTransaction();
                     ArtistsListActivity.this.sendBroadcast(new Intent(ACTION_ERROR_OCCURRED));
                 }
                 dbHelper.getReadableDatabase().beginTransactionNonExclusive();
