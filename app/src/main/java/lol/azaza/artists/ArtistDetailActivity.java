@@ -1,9 +1,10 @@
 package lol.azaza.artists;
 
-import android.content.res.Resources;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Display;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -22,8 +23,13 @@ public class ArtistDetailActivity extends AppCompatActivity {
         Artist artist = (Artist) getIntent().getSerializableExtra(ArtistAdapter.ARTIST);
         setTitle(artist.getName());
         ImageView cover = (ImageView) findViewById(R.id.cover);
-        cover.setMaxWidth(dpToPx(350));
-        cover.setMaxHeight(dpToPx(450));
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        int width = size.x;
+        int height = size.y;
+        cover.setMaxWidth((int) (width * 0.55));
+        cover.setMaxHeight((int) (height * 0.6));
         Glide.with(this).load(artist.getCoverBig()).fitCenter().into(cover);
         TextView genres = (TextView) findViewById(R.id.artist_genres);
         genres.setText(artist.getGenres());
@@ -32,11 +38,6 @@ public class ArtistDetailActivity extends AppCompatActivity {
         TextView description = (TextView) findViewById(R.id.artist_description);
         description.setText(artist.getDescription());
     }
-
-    public static int dpToPx(int dp) {
-        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
-    }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
