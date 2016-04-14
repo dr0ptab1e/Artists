@@ -36,7 +36,6 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
     private ErrorOccurredReceiver errorOccurredReceiver;
     public static final String ACTION_DATA_LOADED = "lol.azaza.artists.data_loaded";
     public static final String ACTION_ERROR_OCCURRED = "lol.azaza.artists.error_occurred";
-    public static final String FLAG_IS_REFRESHING = "lol.azaza.artists.is_refreshing";
     private SwipeRefreshLayout swipeRefreshLayout;
     private LinearLayout errorLayout;
     private LinearLayout hintLayout;
@@ -70,6 +69,15 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
         if (dbHelper.isArtistsTableEmpty()) {
             hintLayout.setVisibility(View.VISIBLE);
         }
+        final AsyncTask task = ((App) getApplication()).getTask();
+        if (task != null) {
+            swipeRefreshLayout.post(new Runnable() {
+                @Override
+                public void run() {
+                    swipeRefreshLayout.setRefreshing(task.getStatus().toString().equals("RUNNING"));
+                }
+            });
+        }
     }
 
     @Override
@@ -82,6 +90,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
 
             @Override
             protected Void doInBackground(Void... params) {
+                ((App) getApplication()).setTask(this);
                 context = getApplicationContext();
                 try {
                     URL url = new URL("http://download.cdn.yandex.net/mobilization-2016/artists.json");
@@ -102,7 +111,6 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
             protected void onPostExecute(Void result) {
                 Intent resultIntent = isSuccess ? new Intent(ACTION_DATA_LOADED) : new Intent(ACTION_ERROR_OCCURRED);
                 context.sendBroadcast(resultIntent);
-                swipeRefreshLayout.setRefreshing(false);
             }
         }.execute();
     }
@@ -111,6 +119,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            swipeRefreshLayout.setRefreshing(false);
             if (!dbHelper.isArtistsTableEmpty()) {
                 hintLayout.setVisibility(View.GONE);
                 errorLayout.setVisibility(View.GONE);
@@ -123,6 +132,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            swipeRefreshLayout.setRefreshing(false);
             hintLayout.setVisibility(View.GONE);
             if (dbHelper.isArtistsTableEmpty()) {
                 errorLayout.setVisibility(View.VISIBLE);
@@ -138,23 +148,6 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
         adapter.getCursor().close();
         unregisterReceiver(dataLoadedReceiver);
         unregisterReceiver(errorOccurredReceiver);
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean(FLAG_IS_REFRESHING, swipeRefreshLayout.isRefreshing());
-    }
-
-    @Override
-    protected void onRestoreInstanceState(final Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        swipeRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshLayout.setRefreshing(savedInstanceState.getBoolean(FLAG_IS_REFRESHING));
-            }
-        });
     }
 
 }
