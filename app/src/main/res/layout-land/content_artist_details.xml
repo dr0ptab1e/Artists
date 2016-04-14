@@ -32,7 +32,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/lightText"
-                android:textSize="20sp" />
+                android:textSize="@dimen/text_medium" />
 
             <TextView
                 android:id="@+id/artist_info"
@@ -41,7 +41,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/lightText"
-                android:textSize="20sp" />
+                android:textSize="@dimen/text_medium" />
 
             <TextView
                 android:layout_marginTop="12dp"
@@ -49,14 +49,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/bio"
-                android:textSize="28sp"
+                android:textSize="@dimen/text_big"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/artist_description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="18sp"
+                android:textSize="@dimen/text_regular"
                 android:layout_marginBottom="20dp" />
         </LinearLayout>
     </ScrollView>

@@ -102,6 +102,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
             protected void onPostExecute(Void result) {
                 Intent resultIntent = isSuccess ? new Intent(ACTION_DATA_LOADED) : new Intent(ACTION_ERROR_OCCURRED);
                 context.sendBroadcast(resultIntent);
+                swipeRefreshLayout.setRefreshing(false);
             }
         }.execute();
     }
@@ -115,7 +116,6 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
                 errorLayout.setVisibility(View.GONE);
             }
             adapter.changeCursor(dbHelper.getAllArtistsCursor());
-            swipeRefreshLayout.setRefreshing(false);
         }
     }
 
