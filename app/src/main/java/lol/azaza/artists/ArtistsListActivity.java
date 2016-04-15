@@ -16,26 +16,12 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-
-import org.apache.commons.io.IOUtils;
-
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
 public class ArtistsListActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
     private CursorRecyclerAdapter<Holder> adapter;
     private DBHelper dbHelper;
     private DataLoadedReceiver dataLoadedReceiver;
     private ErrorOccurredReceiver errorOccurredReceiver;
-    public static final String ACTION_DATA_LOADED = "lol.azaza.artists.data_loaded";
-    public static final String ACTION_ERROR_OCCURRED = "lol.azaza.artists.error_occurred";
     private SwipeRefreshLayout swipeRefreshLayout;
     private LinearLayout errorLayout;
     private LinearLayout hintLayout;
@@ -62,9 +48,9 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
         artistsList.setAdapter(adapter);
         artistsList.setLayoutManager(new LinearLayoutManager(this));
         dataLoadedReceiver = new DataLoadedReceiver();
-        registerReceiver(dataLoadedReceiver, new IntentFilter(ACTION_DATA_LOADED));
+        registerReceiver(dataLoadedReceiver, new IntentFilter(LoadDataTask.ACTION_DATA_LOADED));
         errorOccurredReceiver = new ErrorOccurredReceiver();
-        registerReceiver(errorOccurredReceiver, new IntentFilter(ACTION_ERROR_OCCURRED));
+        registerReceiver(errorOccurredReceiver, new IntentFilter(LoadDataTask.ACTION_ERROR_OCCURRED));
         hintLayout = (LinearLayout) findViewById(R.id.hint_layout);
         if (dbHelper.isArtistsTableEmpty()) {
             hintLayout.setVisibility(View.VISIBLE);
@@ -83,36 +69,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
     @Override
     public void onRefresh() {
         swipeRefreshLayout.setRefreshing(true);
-        new AsyncTask<Void, Void, Void>() {
-
-            Context context;
-            boolean isSuccess = true;
-
-            @Override
-            protected Void doInBackground(Void... params) {
-                ((App) getApplication()).setTask(this);
-                context = getApplicationContext();
-                try {
-                    URL url = new URL("http://download.cdn.yandex.net/mobilization-2016/artists.json");
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                    InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                    String jsonString = IOUtils.toString(in);
-                    GsonBuilder builder = new GsonBuilder();
-                    Gson gson = builder.create();
-                    Artist[] artists = gson.fromJson(jsonString, Artist[].class);
-                    dbHelper.replaceArtists(artists);
-                } catch (IOException | JsonParseException e) {
-                    isSuccess = false;
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void result) {
-                Intent resultIntent = isSuccess ? new Intent(ACTION_DATA_LOADED) : new Intent(ACTION_ERROR_OCCURRED);
-                context.sendBroadcast(resultIntent);
-            }
-        }.execute();
+        new LoadDataTask().execute(getApplicationContext());
     }
 
     private class DataLoadedReceiver extends BroadcastReceiver {
