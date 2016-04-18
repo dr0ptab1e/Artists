@@ -60,7 +60,7 @@ public class ArtistsListActivity extends AppCompatActivity implements SwipeRefre
             swipeRefreshLayout.post(new Runnable() {
                 @Override
                 public void run() {
-                    swipeRefreshLayout.setRefreshing(task.getStatus().toString().equals("RUNNING"));
+                    swipeRefreshLayout.setRefreshing(AsyncTask.Status.RUNNING.equals(task.getStatus()));
                 }
             });
         }

@@ -29,7 +29,7 @@ public class ArtistDetailActivity extends AppCompatActivity {
         int width = size.x;
         int height = size.y;
         cover.setMaxWidth((int) (width * 0.55));
-        cover.setMaxHeight((int) (height * 0.6));
+        cover.setMaxHeight((int) (height * 0.62));
         Glide.with(this).load(artist.getCoverBig()).fitCenter().into(cover);
         TextView genres = (TextView) findViewById(R.id.artist_genres);
         genres.setText(artist.getGenres());
